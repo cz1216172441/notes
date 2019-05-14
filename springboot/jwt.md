@@ -9,6 +9,7 @@ Json Web Token
 * 信息交换
 
 **Json Web令牌结构**
+
 Json Web令牌由`.`分隔的三个部分组成。
 ```
 eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhdXRoMCIsImV4cCI6MTU1Nzc3MjU4NiwidXNlciI6MX0.Vpcwvs13YaRJpXXT4lU1tFlSRsQ-YdCdmGaK6tMoYZM
@@ -18,6 +19,7 @@ eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhdXRoMCIsImV4cCI6MTU1Nzc3MjU4Niw
 * Signature 签名
 
 **Header**
+
 在Header中，包含经过Base64编码的两个部分，一个是签名所使用的算法（默认HS256），一个是token的类型（JWT）。
 ```javascript
 {
@@ -27,14 +29,20 @@ eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhdXRoMCIsImV4cCI6MTU1Nzc3MjU4Niw
 ```
 
 **Payload**
+
 Payload中包含着实体和其它一些数据的声明，这些数据是不加密的，所以一般放置一些可见的数据。
 ```javascript
 {
+  // 预定义声明
   "iss": "auth0",      // 发行人
   "iat": 1516239022,   // 签发时间
   "exp": 1557772586,   // 过期时间
   "sub": "subject",    // 使用Token的主体
-  "aud": "audience"    // 观众
+  "aud": "audience",   // 观众
+  "jti": "1",          // jwt id
+  "nbf": 1557772586,   // 时间 not before
+  // 自定义声明
+  "user_id": 1         // 用户id
 }
 ```
 
@@ -100,5 +108,10 @@ public class JwtUtils {
     }
 
 }
+```
+
+由于token的生成规则中加入了过期时间戳，当验证不通过时，会抛出JWTVerificationException。
+```
+java.lang.Exception: token已过期
 ```
 

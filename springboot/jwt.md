@@ -115,3 +115,55 @@ public class JwtUtils {
 java.lang.Exception: token已过期
 ```
 
+Jwt的使用是在后端登录验证通过后将token存入浏览器的header或者cookie中，然后前端的每次请求都带上token，而在后端的拦截器中验证token是否正确，如果正确则响应请求。
+```java
+import com.notalent.bookstore.jwt.JwtUtils;
+import com.notalent.bookstore.pojo.user.UserInfo;
+import com.notalent.bookstore.service.UserService;
+import com.notalent.bookstore.util.IntegerUtils;
+import com.notalent.bookstore.util.Result;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 用户api
+ * @author noTalent
+ * @version 1.0
+ * 2019.05.09
+ */
+@RestController
+@RequestMapping("/user/api")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @Resource
+    private RedisTemplate redisTemplate;
+
+    @GetMapping("/v1/user/login")
+    public Result login(@RequestParam("username") String username,
+                        @RequestParam("password") String password,
+                        HttpServletResponse response) {
+        UserInfo ui = new UserInfo(username, password);
+        Integer res = userService.login(ui);
+        if (IntegerUtils.isNotError(res)) {
+            String token = JwtUtils.getToken(ui);
+            // token 存入 redis
+            redisTemplate.opsForValue()
+                .set(token, ui, JwtUtils.EXPIRES, TimeUnit.SECONDS);
+            // token 存入 header
+            response.addHeader("Token", token);
+            return Result.success();
+        }
+        return Result.error();
+    }
+
+}
+```
+
